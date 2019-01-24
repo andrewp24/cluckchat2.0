@@ -68,11 +68,10 @@ func main() {
 			}
 			defer conn.Close()
 
-			// First time entry
+			go printOutput(conn)
 
 			for {
 				writeInput(conn)
-				go printOutput(conn)
 			}
 
 		} else {
@@ -90,6 +89,8 @@ func writeInput(conn *net.TCPConn) {
 
 func printOutput(conn *net.TCPConn) {
 
+	// The packet sent from the server is in this format:
+	// <unsigned_short: message_code> <unsigned_short: message_length> <char* string (not null terminated)>
 	buffer := make([]byte, 65536)      // Creates the buffer with a set size. 65536 == 2^16
 	inMessage := bufio.NewReader(conn) // Creates a new reader buffer for the connection
 
@@ -100,22 +101,31 @@ func printOutput(conn *net.TCPConn) {
 		mLength := buffer[2:4]           // Message length
 		mString := buffer[4:n]           // Message string
 
-		fmt.Println(mCode)
-		fmt.Println(mLength)
-		fmt.Println(mString)
-
-		s := string(mString[:])
-		fmt.Println(s)
-
-		dCode := binary.BigEndian.Uint16(mCode)
-		fmt.Println(dCode)
-
-		dLength := binary.BigEndian.Uint16(mLength)
-		fmt.Println(dLength)
+		getPacketMessage(mString)
+		getPacketCode(mCode)
+		getPacketLength(mLength)
 
 		if err != nil {
 			fmt.Println(err)
 			break
 		}
 	}
+}
+
+func getPacketMessage(mString []byte) {
+	// Takes the bytes and converts them to string
+	s := string(mString[:])
+	fmt.Println(s)
+}
+
+func getPacketCode(mCode []byte) {
+	// Takes the bytes and converts them to an unsigned short (uint16)
+	dCode := binary.BigEndian.Uint16(mCode)
+	fmt.Println(dCode)
+}
+
+func getPacketLength(mLength []byte) {
+	// Takes the bytes and converts them to an unsigned short (uint16)
+	dLength := binary.BigEndian.Uint16(mLength)
+	fmt.Println(dLength)
 }
