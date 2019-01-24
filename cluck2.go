@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/binary"
 	"fmt"
 	"log"
 	"net"
@@ -89,9 +90,32 @@ func writeInput(conn *net.TCPConn) {
 
 func printOutput(conn *net.TCPConn) {
 
-	inMessage := bufio.NewScanner(conn)
+	buffer := make([]byte, 65536)      // Creates the buffer with a set size. 65536 == 2^16
+	inMessage := bufio.NewReader(conn) // Creates a new reader buffer for the connection
 
-	for inMessage.Scan() {
-		fmt.Println(inMessage.Text())
+	for {
+
+		n, err := inMessage.Read(buffer) // n is the number of bytes in the buffer
+		mCode := buffer[0:2]             // Message code
+		mLength := buffer[2:4]           // Message length
+		mString := buffer[4:n]           // Message string
+
+		fmt.Println(mCode)
+		fmt.Println(mLength)
+		fmt.Println(mString)
+
+		s := string(mString[:])
+		fmt.Println(s)
+
+		dCode := binary.BigEndian.Uint16(mCode)
+		fmt.Println(dCode)
+
+		dLength := binary.BigEndian.Uint16(mLength)
+		fmt.Println(dLength)
+
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
 	}
 }
