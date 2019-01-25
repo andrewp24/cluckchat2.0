@@ -52,6 +52,7 @@ func main() {
 			defer conn.Close()
 
 			go printOutput(conn)
+			askForMotd(conn)
 
 			for {
 				writeInput(conn)
@@ -69,6 +70,7 @@ func main() {
 			defer conn.Close()
 
 			go printOutput(conn)
+			go askForMotd(conn)
 
 			for {
 				writeInput(conn)
@@ -85,6 +87,15 @@ func writeInput(conn *net.TCPConn) {
 	reader := bufio.NewReader(os.Stdin)
 	text, _ := reader.ReadString('\n')
 	fmt.Fprintf(conn, text+"\n")
+}
+
+func askForMotd(conn *net.TCPConn) {
+	// make into constants
+	mCode := make([]byte, 2)
+	binary.BigEndian.PutUint16(mCode, 2)
+	writer := bufio.NewWriter(conn)
+	writer.Write(mCode)
+	fmt.Println("done")
 }
 
 func printOutput(conn *net.TCPConn) {
