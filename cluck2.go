@@ -7,106 +7,74 @@ import (
 	"log"
 	"net"
 	"os"
-	"strings"
 )
 
-// These are constants
-// ConnIPEn - the IP address for Enis' server. This is the main server.
-// ConnIPRob - the IP address for Robert's server
-// ConnPort - we are using port 8888
-// ConnType - this client uses tcp. can be udp as well.
+/*
+ These are constants:
+
+ ConnIPEn - The IP address for Enis' server.
+
+ ConnPort - We are using port 8888
+
+ ConnType - This client uses tcp. can be udp as well.
+*/
 const (
-	ConnIPEn  = "130.85.70.132" // Enis' IP address
-	ConnIPRob = "130.85.70.193" // Robert's IP address
-	ConnPort  = "8888"
-	ConnType  = "tcp"
+	ConnIPEn = "130.85.70.132"
+	ConnPort = "8888"
+	ConnType = "tcp"
 )
 
 func main() {
+	tcpAddr, err := net.ResolveTCPAddr(ConnType, ConnIPEn+":"+ConnPort)
+	conn, err := net.DialTCP(ConnType, nil, tcpAddr) // Connect to server with tcp and handle any errors
 
-	// Checks where the user is trying to connect to.
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+	go printOutput(conn)
+	askForMotd(conn)
 	for {
-
-		// Asks user for which server they want to connect to.
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Println("Which server would you like to log in to?\n Type 'en' for Enis or 'ro' for Robert..")
-		hostOption, err := reader.ReadString('\n')
-		hostOption = strings.Replace(hostOption, "\n", "", -1) // Makes this work on unix machines
-		//hostOption = strings.Replace(hostOption, "\r\n", "", -1) // Makes this work on windows machines
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// This if else statement checks the user's input for which server they are connecting to.
-		// If they give an invalid input, they will have to enter it again.
-		if hostOption == "en" {
-			fmt.Println("You chose Enis' server. Connecting now...")
-			tcpAddr, err := net.ResolveTCPAddr(ConnType, ConnIPEn+":"+ConnPort)
-
-			// Connect to server with tcp
-			conn, err := net.DialTCP(ConnType, nil, tcpAddr)
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer conn.Close()
-
-			go printOutput(conn)
-			askForMotd(conn)
-
-			for {
-				writeInput(conn)
-			}
-
-		} else if hostOption == "ro" {
-			fmt.Println("You chose Robert's server. Connecting now...")
-			tcpAddr, err := net.ResolveTCPAddr(ConnType, ConnIPRob+":"+ConnPort)
-
-			// Connect to server with tcp
-			conn, err := net.DialTCP(ConnType, nil, tcpAddr)
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer conn.Close()
-
-			go printOutput(conn)
-			go askForMotd(conn)
-
-			for {
-				writeInput(conn)
-			}
-
-		} else {
-			fmt.Println("You didn't pick either 'en' or 'ro'. Try again.\n ")
-		}
+		writeInput(conn)
 	}
 }
 
+// Read from standard input
 func writeInput(conn *net.TCPConn) {
-	// Read from standard input
 	reader := bufio.NewReader(os.Stdin)
 	text, _ := reader.ReadString('\n')
+
 	fmt.Fprintf(conn, text+"\n")
 }
 
+// Requests the message of the day from the server
+//
+// Currently, the code for the MOTD is 2
 func askForMotd(conn *net.TCPConn) {
-	// make into constants
-	mCode := make([]byte, 2)
-	binary.BigEndian.PutUint16(mCode, 2)
-	writer := bufio.NewWriter(conn)
-	writer.Write(mCode)
+	var mCode uint16 = 2
+	arraySize := 2
+	mCodeArray := make([]byte, arraySize) // Creates a byte type array of size 2
+	writer := bufio.NewWriter(conn)       // Creates a writer to right to the server
+
+	binary.BigEndian.PutUint16(mCodeArray, mCode) // Converts bytes to size 16 unsigned Int
+	writer.Write(mCodeArray)
 	fmt.Println("done")
 }
 
+// Creates and receives the buffer from the server
+//
+// Slices the different parts of the received packet
+//
+// The packet sent from the server is in this format:
+//
+// <unsigned_short: message_code> <unsigned_short: message_length> <char* string (not null terminated)>
 func printOutput(conn *net.TCPConn) {
-
-	// The packet sent from the server is in this format:
-	// <unsigned_short: message_code> <unsigned_short: message_length> <char* string (not null terminated)>
-	buffer := make([]byte, 65536)      // Creates the buffer with a set size. 65536 == 2^16
+	bufferSize := 65536                // 2^16
+	buffer := make([]byte, bufferSize) // Creates the buffer5536 ==
 	inMessage := bufio.NewReader(conn) // Creates a new reader buffer for the connection
 
+	// Endless loop to print the received data to the terminal
 	for {
-
 		n, err := inMessage.Read(buffer) // n is the number of bytes in the buffer
 		mCode := buffer[0:2]             // Message code
 		mLength := buffer[2:4]           // Message length
@@ -115,7 +83,6 @@ func printOutput(conn *net.TCPConn) {
 		getPacketMessage(mString)
 		getPacketCode(mCode)
 		getPacketLength(mLength)
-
 		if err != nil {
 			fmt.Println(err)
 			break
@@ -123,20 +90,20 @@ func printOutput(conn *net.TCPConn) {
 	}
 }
 
+// Takes the bytes and converts them to string
 func getPacketMessage(mString []byte) {
-	// Takes the bytes and converts them to string
 	s := string(mString[:])
 	fmt.Println(s)
 }
 
+// Takes the bytes and converts them to an unsigned short (uint16)
 func getPacketCode(mCode []byte) {
-	// Takes the bytes and converts them to an unsigned short (uint16)
 	dCode := binary.BigEndian.Uint16(mCode)
 	fmt.Println(dCode)
 }
 
+// Takes the bytes and converts them to an unsigned short (uint16)
 func getPacketLength(mLength []byte) {
-	// Takes the bytes and converts them to an unsigned short (uint16)
 	dLength := binary.BigEndian.Uint16(mLength)
 	fmt.Println(dLength)
 }
