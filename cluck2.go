@@ -25,8 +25,8 @@ const (
 func main() {
 
 	// Checks where the user is trying to connect to.
-	// Correct := false
 	for {
+
 		// Asks user for which server they want to connect to.
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Println("Which server would you like to log in to?\n Type 'en' for Enis or 'ro' for Robert..")
