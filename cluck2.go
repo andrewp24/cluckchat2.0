@@ -50,6 +50,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer conn.Close()
+	// look at this: https://youtu.be/icbFEmh7Ym0?t=708
 	go printOutput(conn)
 	registerUser(conn)
 	time.Sleep(1 * time.Millisecond)
