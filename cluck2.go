@@ -90,14 +90,13 @@ func registerUser(conn *net.TCPConn) {
 	registerMLength := uint16(len(text) - 1)            // Takes the length of the user's input
 	registerMLengthArray := make([]byte, byteArraySize) // creates an array the size of the length portion of the header
 	username := []byte(text)                            // Creates the username byte array with the bytes of the input string
-	username = username[:len(username)-1]
+	username = username[:len(username)-1]               // Slices off the last character (new line character)
 
 	binary.BigEndian.PutUint16(rCodeArray, registerCode)              // Converts bytes to size 16 unsigned Int
 	binary.BigEndian.PutUint16(registerMLengthArray, registerMLength) // Converts bytes to size 16 unsigned Int, saves to the length array
 	x := []byte{}                                                     // Creating a temp array
 	x = append(rCodeArray, registerMLengthArray...)                   // Appends the header arrays to the temp array
-	//fmt.Println(append(x, username...))
-	conn.Write(append(x, username...)) // Appends the message array to the temp array. Writes the bytes to the server
+	conn.Write(append(x, username...))                                // Appends the message array to the temp array. Writes the bytes to the server
 }
 
 // Creates and receives the buffer from the server
