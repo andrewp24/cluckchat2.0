@@ -97,6 +97,9 @@ func registerUser(conn *net.TCPConn) {
 	x := []byte{}                                                     // Creating a temp array
 	x = append(rCodeArray, registerMLengthArray...)                   // Appends the header arrays to the temp array
 	conn.Write(append(x, username...))                                // Appends the message array to the temp array. Writes the bytes to the server
+
+	// get the output here
+
 }
 
 // Creates and receives the buffer from the server
@@ -106,6 +109,7 @@ func registerUser(conn *net.TCPConn) {
 // The packet sent from the server is in this format:
 //
 // <unsigned_short: message_code> <unsigned_short: message_length> <char* string (not null terminated)>
+// look at how to do non blocking !!!!!!!!!!!!!
 func printOutput(conn *net.TCPConn) {
 	buffer := make([]byte, bufferSize) // Creates the buffer
 	inMessage := bufio.NewReader(conn) // Creates a new reader buffer for the connection
@@ -116,13 +120,17 @@ func printOutput(conn *net.TCPConn) {
 		mCode := buffer[0:2]             // Message code
 		mLength := buffer[2:4]           // Message length
 		mString := buffer[4:n]           // Message string
+		packetCode := getPacketCode(mCode)
 
-		fmt.Println(getPacketMessage(mString))
-		getPacketCode(mCode)
+		getPacketMessage(mString)
 		getPacketLength(mLength)
 		if err != nil {
 			fmt.Println(err)
 			break
+		}
+		if packetCode == 11 {
+			fmt.Println("Username unsuccessful")
+			continue
 		}
 	}
 }
