@@ -34,13 +34,13 @@ import (
  failureCode - Type uint16. The code is 11.
 */
 const (
-	ConnIPEn              = "130.85.70.132"
-	ConnPort              = "8888"
-	ConnType              = "tcp"
+	connIPEn              = "130.85.70.132"
+	connPort              = "8888"
+	connType              = "tcp"
 	byteArraySize         = 2
 	bufferSize            = 65536
 	requestMLength uint16 = 0
-	MOTDCode       uint16 = 2
+	mOTDCode       uint16 = 2
 	whoAmICode     uint16 = 110
 	registerCode   uint16 = 100
 	failureCode    uint16 = 11
@@ -50,8 +50,8 @@ var m = sync.Mutex{}
 
 func main() {
 	// TODO an option for the user to pick if they want the MOTD or not?
-	tcpAddr, err := net.ResolveTCPAddr(ConnType, ConnIPEn+":"+ConnPort)
-	conn, err := net.DialTCP(ConnType, nil, tcpAddr) // Connect to server with tcp and handle any errors
+	tcpAddr, err := net.ResolveTCPAddr(connType, connIPEn+":"+connPort)
+	conn, err := net.DialTCP(connType, nil, tcpAddr) // Connect to server with tcp and handle any errors
 
 	fmt.Println("Connecting to the server now.")
 	if err != nil {
@@ -105,7 +105,7 @@ func askForMotd(conn *net.TCPConn) {
 	mLengthArray := make([]byte, byteArraySize) // Creates a byte type array of size 0 for the message length
 
 	//fmt.Println("Getting the MOTD")
-	binary.BigEndian.PutUint16(mCodeArray, MOTDCode)         // Converts bytes to size 16 unsigned Int, saves to the code array
+	binary.BigEndian.PutUint16(mCodeArray, mOTDCode)         // Converts bytes to size 16 unsigned Int, saves to the code array
 	binary.BigEndian.PutUint16(mLengthArray, requestMLength) // Converts bytes to size 16 unsigned Int, saves to the length array
 	conn.Write(append(mCodeArray, mLengthArray...))          // Writes the bytes to the server
 	_, _, message := getPackage(conn)                        // Retrieves the message of the package
